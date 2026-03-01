@@ -1,5 +1,11 @@
 #!/bin/bash
 echo "========================================"
+echo "Cleaning up previous builds..."
+echo "========================================"
+rm -rf build/ dist/ *.AppImage *.spec Instaloader-GUI-Wrapper.AppDir/
+echo "Done."
+
+echo "========================================"
 echo "Building Instaloader GUI Wrapper"
 echo "========================================"
 

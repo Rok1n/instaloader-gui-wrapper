@@ -38,6 +38,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
 import sys
 import os
 import glob
+import webbrowser
 from datetime import datetime
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                            QLineEdit, QCheckBox, QPushButton, QTextEdit, 
@@ -815,7 +816,8 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # Version info with hyperlink to Instaloader - changed color to white
         version_label = QLabel(f'Using <a href="https://instaloader.github.io/" style="color: white">Instaloader</a> Library v{INSTALOADER_VERSION}')
-        version_label.setOpenExternalLinks(True)
+        version_label.setOpenExternalLinks(False)
+        version_label.linkActivated.connect(self.open_link)
         version_label.setStyleSheet("font-size: 14px; color: #808080;")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         scroll_layout.addWidget(version_label)
@@ -833,7 +835,8 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # Developer info
         dev_label = QLabel('Developed by <a href="https://github.com/marhensa/" style="color: white">@marhensa</a>')
-        dev_label.setOpenExternalLinks(True)
+        dev_label.setOpenExternalLinks(False)
+        dev_label.linkActivated.connect(self.open_link)
         dev_label.setStyleSheet("font-size: 16px; color: #4CAF50;")
         dev_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         dev_label.setWordWrap(True)
@@ -841,14 +844,16 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # GitHub link
         github_label = QLabel('<a href="https://github.com/marhensa/instaloader-gui-wrapper" style="color: #2196F3;">GitHub Repository</a>')
-        github_label.setOpenExternalLinks(True)
+        github_label.setOpenExternalLinks(False)
+        github_label.linkActivated.connect(self.open_link)
         github_label.setStyleSheet("font-size: 14px;")
         github_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         scroll_layout.addWidget(github_label)
         
         # Donation info
         donation_label = QLabel('If you find this tool useful, please consider supporting development: <a href="https://ko-fi.com/marhensa" style="color: white">Ko-fi @marhensa</a>')
-        donation_label.setOpenExternalLinks(True)
+        donation_label.setOpenExternalLinks(False)
+        donation_label.linkActivated.connect(self.open_link)
         donation_label.setStyleSheet("font-size: 14px; color: #FFB74D;")
         donation_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         donation_label.setWordWrap(True)
@@ -881,6 +886,28 @@ class InstaloaderGUIWrapper(QMainWindow):
         scroll_layout.addStretch()
 
         layout.addWidget(scroll)
+
+    def open_link(self, url):
+        """Open URL in default browser with AppImage environment escape."""
+        # When running as AppImage, LD_LIBRARY_PATH can interfere with system browser
+        # because the AppImage bundles its own (potentially incompatible) libraries.
+        saved_env = {var: os.environ.get(var) for var in ["LD_LIBRARY_PATH", "PYTHONHOME", "PYTHONPATH"]}
+        
+        try:
+            if "APPIMAGE" in os.environ:
+                # Remove variables that might break original system browser
+                for var in saved_env:
+                    if var in os.environ:
+                        del os.environ[var]
+            
+            webbrowser.open(url)
+        except Exception as e:
+            self.logger.error(f"Failed to open link {url}: {e}")
+        finally:
+            # Restore environment variables for the current process
+            for var, value in saved_env.items():
+                if value is not None:
+                    os.environ[var] = value
 
     def setup_progress_bars(self, layout):
         """

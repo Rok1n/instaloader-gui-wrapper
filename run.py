@@ -87,7 +87,7 @@ def main():
     
     # Create main window
     window = InstaloaderGUIWrapper()
-    window.show()
+    window.showMaximized()
     
     logger.info("Main window initialized and displayed")
     

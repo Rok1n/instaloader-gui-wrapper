@@ -1,5 +1,13 @@
 @echo off
 echo ========================================
+echo Cleaning up previous builds...
+echo ========================================
+if exist build rd /s /q build
+if exist dist rd /s /q dist
+if exist *.spec del /q *.spec
+echo Done.
+
+echo ========================================
 echo Building Instaloader GUI Wrapper
 echo ========================================
 

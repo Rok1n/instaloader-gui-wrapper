@@ -26,6 +26,7 @@ dist/
 
 # User data (keep templates but ignore actual data)
 downloads/
+downloads_v
 user-settings/
 session*
 
