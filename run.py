@@ -36,10 +36,12 @@ import os
 import locale  # Restore missing import
 
 from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QLocale
 from PyQt6.QtGui import QIcon
 import qdarktheme  # Add qdarktheme import
 from src.gui import InstaloaderGUIWrapper
 from src.core.logger import get_logger
+from src.config.constants import get_resource_path
 
 def main():
     """
@@ -56,7 +58,8 @@ def main():
     logger.info("Instaloader GUI Wrapper starting up")
     logger.info("====================================")
     
-    # Create Qt application
+    # Use Chinese formatting and native Simplified Chinese system dialogs where available.
+    QLocale.setDefault(QLocale("zh_CN"))
     app = QApplication(sys.argv)
     
     # Set convention for time formatting to C (standard English)
@@ -76,7 +79,7 @@ def main():
     
     # Set application icon
     app_root = os.path.dirname(os.path.abspath(__file__))
-    icon_path = os.path.join(app_root, "assets", "icon.png")
+    icon_path = get_resource_path(os.path.join("assets", "icon.png"))
     if os.path.exists(icon_path):
         app.setWindowIcon(QIcon(icon_path))
         logger.info(f"Application icon set from: {icon_path}")
@@ -87,7 +90,11 @@ def main():
     
     # Create main window
     window = InstaloaderGUIWrapper()
-    window.showMaximized()
+    if sys.platform == "darwin":
+        window.resize(1250, 840)
+        window.show()
+    else:
+        window.showMaximized()
     
     logger.info("Main window initialized and displayed")
     
