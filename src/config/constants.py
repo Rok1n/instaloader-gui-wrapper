@@ -68,8 +68,16 @@ else:
     # Running from source - use project root
     EXEC_DIR = APP_ROOT
 
-# Configuration file paths - store settings near executable/AppImage
-CONFIG_DIR = os.path.join(EXEC_DIR, 'user-settings')
+# macOS .app bundles (including /Applications) are not writable.
+# Keep user settings in Application Support, and default downloads in ~/Downloads.
+if sys.platform == 'darwin':
+    EXEC_DIR = os.path.join(os.path.expanduser('~'), 'Downloads')
+    CONFIG_DIR = os.path.join(
+        os.path.expanduser('~'), 'Library', 'Application Support',
+        'Instaloader-GUI-Wrapper'
+    )
+else:
+    CONFIG_DIR = os.path.join(EXEC_DIR, 'user-settings')
 CONFIG_FILE = os.path.join(CONFIG_DIR, 'settings.json')
 CONFIG_BACKUP = f"{CONFIG_FILE}.backup"
 
