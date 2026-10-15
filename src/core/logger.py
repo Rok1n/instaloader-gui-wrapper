@@ -41,6 +41,7 @@ import os
 import atexit
 import sys
 from PyQt6.QtCore import pyqtSignal
+from ..config.constants import CONFIG_DIR
 
 class GUILogHandler(logging.Handler):
     """
@@ -136,11 +137,10 @@ def setup_logger():
         for handler in logger.handlers:
             logger.removeHandler(handler)
     
-    # Configure log file path in same directory as the application
-    log_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
-                                  "..", "..", 
-                                  "instagram_downloader.log")
-    
+    # File logs belong in a writable per-user directory, not the macOS .app bundle.
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    log_file_path = os.path.join(CONFIG_DIR, "instagram_downloader.log")
+
     # Create and add file handler with immediate flushing
     file_handler = FileHandlerWithFlush(log_file_path, mode='a', delay=False, encoding='utf-8')
     file_handler.setFormatter(

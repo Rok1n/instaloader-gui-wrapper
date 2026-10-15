@@ -1,5 +1,7 @@
 # Instaloader GUI Wrapper
 
+[**简体中文说明 / Intel macOS DMG 下载与安装**](README.zh-CN.md)
+
 <div align="center">
   <img src="assets/icon.png" alt="Logo" width="128" />
   <br />
