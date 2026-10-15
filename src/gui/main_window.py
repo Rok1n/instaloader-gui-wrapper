@@ -283,8 +283,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         help_label = QLabel("❓")
         help_label.setStyleSheet("color: #E0E0E0;")
         session_locations = (
-            "会话文件包含登录信息，应妥善保管。公共电脑使用后请删除。\n"
-            "Windows：%localappdata%\\\Instaloader\\\session-yourusername\n"
+            "会话文件包含登录信息，应妥善保管，公共电脑使用后请删除。\\n"
+            "Windows：%localappdata%/Instaloader/session-yourusername\\n"
             "macOS / Linux：~/.config/instaloader/session-yourusername"
         )
         help_label.setToolTip(session_locations)
@@ -2083,8 +2083,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         if os.path.exists(session_path):
             self.session_path.setText(os.path.normpath(session_path))
             self.use_session.setChecked(True)
-            self.log_message("已设置会话文件供下次下载使用。"
-                            "You won't need to enter login credentials again.", "INFO")
+            self.log_message("已设置会话文件供下次下载使用，无需再次输入账号密码。", "INFO")
 
     def toggle_post_limit(self, state):
         """
