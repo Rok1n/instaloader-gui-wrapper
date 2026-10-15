@@ -51,6 +51,7 @@ from PyQt6.QtCore import (Qt, QDate, pyqtSignal, QEventLoop, QTimer, QMetaObject
 from PyQt6.QtGui import QPixmap, QIcon, QFont, QIntValidator
 
 from .components import LogViewer
+from ..i18n import translate_log
 from ..core.downloader import DownloaderThread, ProfileCheckThread
 from ..config.settings import Settings
 from ..config.constants import (DEFAULT_BASE_DELAY, DEFAULT_JITTER, 
@@ -107,9 +108,9 @@ class InstaloaderGUIWrapper(QMainWindow):
         6. Set up 2FA handling mechanism
         """
         super().__init__()
-        self.setWindowTitle(f"{APP_NAME} v{APP_VERSION} | Instaloader Python Library v{INSTALOADER_VERSION}")
-        self.setWindowIcon(QIcon(get_resource_path("icon.ico")))
-        self.setMinimumSize(1200, 800)
+        self.setWindowTitle(f"Instaloader 图形下载器 v{APP_VERSION} | Instaloader v{INSTALOADER_VERSION}")
+        self.setWindowIcon(QIcon(get_resource_path("assets/icon.png")))
+        self.setMinimumSize(980, 700)
         self.downloader_thread = None
         self.last_download_path = None
         self.profile_check_thread = None
@@ -170,9 +171,9 @@ class InstaloaderGUIWrapper(QMainWindow):
         self.advanced_tab = QWidget()
         self.about_tab = QWidget()
         
-        self.tabs.addTab(self.basic_tab, "Basic Settings")
-        self.tabs.addTab(self.advanced_tab, "Advanced Settings")
-        self.tabs.addTab(self.about_tab, "About")
+        self.tabs.addTab(self.basic_tab, "基本设置")
+        self.tabs.addTab(self.advanced_tab, "高级设置")
+        self.tabs.addTab(self.about_tab, "关于")
         
         basic_layout = QVBoxLayout(self.basic_tab)
         advanced_layout = QVBoxLayout(self.advanced_tab)
@@ -213,7 +214,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         layout = QVBoxLayout(right_panel)
         
         # Image preview area with placeholder text
-        self.preview_label = QLabel("No images downloaded yet")
+        self.preview_label = QLabel("尚未下载图片")
         self.preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.preview_label.setMinimumHeight(400)
         self.preview_label.setStyleSheet("background-color: #2B2B2B; border: 1px solid #3E3E3E;")
@@ -225,9 +226,9 @@ class InstaloaderGUIWrapper(QMainWindow):
         self.image_info.setStyleSheet("background-color: #2B2B2B; border: 1px solid #3E3E3E;")
         
         # Add components to layout
-        layout.addWidget(QLabel("Latest Download Preview"))
+        layout.addWidget(QLabel("最近下载预览"))
         layout.addWidget(self.preview_label)
-        layout.addWidget(QLabel("Image Information"))
+        layout.addWidget(QLabel("文件信息"))
         layout.addWidget(self.image_info)
         
         return right_panel
@@ -247,16 +248,16 @@ class InstaloaderGUIWrapper(QMainWindow):
             layout (QVBoxLayout): Layout to add the input components to
         """
         # Create login credentials group
-        cred_group = QGroupBox("👤 Login Credentials")
+        cred_group = QGroupBox("👤 Instagram 登录")
         cred_layout = QVBoxLayout()
         
         # Username/password input row
         login_layout = QHBoxLayout()
         self.username = QLineEdit()
-        self.username.setPlaceholderText("Instagram Username")
+        self.username.setPlaceholderText("Instagram 用户名")
         self.username.textChanged.connect(self._update_will_login_label)
         self.password = QLineEdit()
-        self.password.setPlaceholderText("Instagram Password")
+        self.password.setPlaceholderText("Instagram 密码")
         self.password.setEchoMode(QLineEdit.EchoMode.Password)
         login_layout.addWidget(self.username)
         login_layout.addWidget(self.password)
@@ -270,22 +271,21 @@ class InstaloaderGUIWrapper(QMainWindow):
         
         # Save session option with help tooltip
         save_session_layout = QHBoxLayout()
-        self.save_session = QCheckBox("💾 Save 'Session File' after login (avoids login and/or 2FA next time)")
+        self.save_session = QCheckBox("💾 登录后保存会话文件（下次免登录或验证）")
         save_font = self.save_session.font()
         save_font.setBold(False)
         self.save_session.setFont(save_font)
         self.save_session.setChecked(True)  # Enabled by default
-        self.save_session.setToolTip("Save login session to avoid having to enter credential and 2FA code on future logins")
+        self.save_session.setToolTip("保存登录状态，下次无需重复输入账号、密码和双重验证码")
         save_session_layout.addWidget(self.save_session)
         
         # Help icon with tooltip explaining session files
         help_label = QLabel("❓")
         help_label.setStyleSheet("color: #E0E0E0;")
         session_locations = (
-            "Session files are like password stored cookies, located in:\n"
-            "(!!! make sure to delete it if you use public computer !!!)\n"
-            "Windows: %localappdata%\\Instaloader\\session-yourusername\n"
-            "Linux: ~/.config/instaloader/session-yourusername"
+            "会话文件包含登录信息，应妥善保管。公共电脑使用后请删除。\\n"
+            "Windows：%localappdata%\\\\Instaloader\\\\session-yourusername\\n"
+            "macOS / Linux：~/.config/instaloader/session-yourusername"
         )
         help_label.setToolTip(session_locations)
         save_session_layout.addWidget(help_label)
@@ -307,7 +307,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         checkbox_layout.setSpacing(2)
         
         # Session option toggle
-        self.use_session = QCheckBox("Check to Use 'Session File'")
+        self.use_session = QCheckBox("使用已有会话文件")
         self.use_session.stateChanged.connect(self.toggle_credentials)
         
         checkbox_layout.addWidget(self.use_session)
@@ -318,7 +318,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         # Session file path and selection button
         self.session_path = QLineEdit()
         self.session_path.setReadOnly(True)
-        self.session_button = QPushButton("Select Session File")
+        self.session_button = QPushButton("选择会话文件")
         
         # Configure size policies
         self.session_path.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -337,16 +337,16 @@ class InstaloaderGUIWrapper(QMainWindow):
         layout.addWidget(cred_group)
 
         # Target profile/post selection group
-        target_group = QGroupBox("📥 Download Target")
+        target_group = QGroupBox("📥 下载目标")
         target_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         target_layout = QVBoxLayout()
         
         # Download Mode Selection
         mode_layout = QHBoxLayout()
-        mode_label = QLabel("Download Mode:")
+        mode_label = QLabel("下载模式：")
         self.download_mode = QComboBox()
         self.download_mode.setMinimumWidth(130)  # Prevent text truncation
-        self.download_mode.addItems(["Target Profile", "Saved Posts", "Single Post"])
+        self.download_mode.addItems(["目标账号", "已收藏帖子", "单条内容"])
         self.download_mode.currentIndexChanged.connect(self.change_download_mode)
         
         # User info label (updated when session is selected)
@@ -369,10 +369,10 @@ class InstaloaderGUIWrapper(QMainWindow):
         profile_page_layout.setContentsMargins(0, 0, 0, 0)
         
         profile_row = QHBoxLayout()
-        profile_label = QLabel("Target Profile:")
+        profile_label = QLabel("目标账号：")
         self.target_profile = QLineEdit()
-        self.target_profile.setPlaceholderText("username without @")
-        self.check_name_button = QPushButton("Check Name")
+        self.target_profile.setPlaceholderText("用户名（不带 @）")
+        self.check_name_button = QPushButton("检查账号")
         self.check_name_button.clicked.connect(self.check_profile_name)
         self.check_name_button.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
         self.profile_name_display = QLabel("")
@@ -390,7 +390,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         saved_page_layout = QVBoxLayout(saved_page)
         saved_page_layout.setContentsMargins(0, 0, 0, 0)
         
-        self.saved_info = QLabel("📁 Saved posts will be downloaded to: downloads/saved_posts/{post_owner}/")
+        self.saved_info = QLabel("📁 已收藏帖子保存至：downloads/saved_posts/{post_owner}/")
         self.saved_info.setStyleSheet("color: #808080; font-style: italic;")
         saved_page_layout.addWidget(self.saved_info)
         
@@ -404,7 +404,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         url_row = QHBoxLayout()
         url_label = QLabel("URL:")
         self.post_url = QLineEdit()
-        self.post_url.setPlaceholderText("https://www.instagram.com/p/xyzabc123/ (supports posts/reels/stories/highlights)")
+        self.post_url.setPlaceholderText("https://www.instagram.com/p/xyzabc123/（支持帖子、Reels、快拍和精选）")
         url_row.addWidget(url_label)
         url_row.addWidget(self.post_url)
         single_page_layout.addLayout(url_row)
@@ -416,16 +416,16 @@ class InstaloaderGUIWrapper(QMainWindow):
         # Download location selection (always visible)
         save_layout = QHBoxLayout()
         
-        dir_label = QLabel("📂 Download Location:")
+        dir_label = QLabel("📂 下载位置：")
         self.dir_path = QLineEdit()
         self.dir_path.setReadOnly(True)
         self.dir_path.setText(EXEC_DIR)
-        self.dir_button = QPushButton("Browse...")
+        self.dir_button = QPushButton("浏览…")
         self.dir_button.clicked.connect(self.select_directory)
         
-        self.skip_existing = QCheckBox("Skip Existing Files")
+        self.skip_existing = QCheckBox("跳过已有文件")
         self.skip_existing.setChecked(True)
-        self.skip_existing.setToolTip("Skip downloading files that already exist locally")
+        self.skip_existing.setToolTip("如果文件已存在于本地，则跳过下载")
         
         save_layout.addWidget(dir_label)
         save_layout.addWidget(self.dir_path, 3)
@@ -443,7 +443,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         Args:
             layout (QVBoxLayout): Layout to add the options components to
         """
-        self.options_group = QGroupBox("🔽 Download Options (for Target Profile)")
+        self.options_group = QGroupBox("🔽 下载选项（目标账号）")
         self.options_group.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Maximum)
         options_layout = QVBoxLayout()
         
@@ -458,12 +458,12 @@ class InstaloaderGUIWrapper(QMainWindow):
         date_sub_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # Date range inputs
-        since_label = QLabel("Date Range From:")
+        since_label = QLabel("日期范围：从")
         self.since_date = QDateEdit()
         self.since_date.setCalendarPopup(True)
         self.since_date.setDate(QDate.currentDate().addYears(-1))  # Default to 1 year ago
         
-        until_label = QLabel("To:")
+        until_label = QLabel("到：")
         self.until_date = QDateEdit()
         self.until_date.setCalendarPopup(True)
         self.until_date.setDate(QDate.currentDate())  # Default to today
@@ -474,8 +474,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         date_sub_layout.addWidget(self.until_date)
         
         # Option to ignore date filtering
-        self.ignore_date_range = QCheckBox("Ignore Date Range")
-        self.ignore_date_range.setToolTip("Download all posts regardless of date range settings")
+        self.ignore_date_range = QCheckBox("忽略日期范围")
+        self.ignore_date_range.setToolTip("无视日期范围，下载全部符合条件的帖子")
         self.ignore_date_range.stateChanged.connect(self.toggle_date_range)
         self.ignore_date_range.setChecked(True)  # Set to checked by default
         
@@ -487,7 +487,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         options_layout.addLayout(date_layout)
         
         # Info note about date range (only for Saved Posts mode)
-        self.date_info = QLabel("ℹ️ Date range filters by original post upload date, not when you saved it")
+        self.date_info = QLabel("ℹ️ 按帖子原始发布日期筛选，而非收藏日期")
         self.date_info.setStyleSheet("color: #808080; font-style: italic; font-size: 11px;")
         self.date_info.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.date_info.setVisible(False)  # Hidden by default, shown only for Saved Posts
@@ -501,10 +501,10 @@ class InstaloaderGUIWrapper(QMainWindow):
         fs_header = QHBoxLayout()
         # fs_header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        fs_label = QLabel("Folder Structure:")
+        fs_label = QLabel("文件夹结构：")
         self.folder_structure_mode = QComboBox()
         self.folder_structure_mode.setMinimumWidth(260)  # Increased width to fit text
-        self.folder_structure_mode.addItems(["Separate Folders (Recommended)", "Single Folder with Prefix"])
+        self.folder_structure_mode.addItems(["按账号分别建文件夹（推荐）", "单文件夹，文件名前加账号名"])
         self.folder_structure_mode.currentIndexChanged.connect(self._update_folder_structure_desc)
         
         fs_header.addStretch(1)
@@ -526,8 +526,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         limit_layout = QHBoxLayout()
         limit_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        self.limit_posts = QCheckBox("Limit Number of Posts:")
-        self.limit_posts.setToolTip("Set a maximum number of posts to download")
+        self.limit_posts = QCheckBox("限制帖子数量：")
+        self.limit_posts.setToolTip("设置允许下载的帖子数量上限")
         self.limit_posts.stateChanged.connect(self.toggle_post_limit)
         
         self.max_posts = QSpinBox()
@@ -535,7 +535,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         self.max_posts.setMaximum(10000)
         self.max_posts.setValue(50)  # Default reasonable value
         self.max_posts.setEnabled(False)  # Disabled by default
-        self.max_posts.setToolTip("Maximum number of posts to download")
+        self.max_posts.setToolTip("最多下载的帖子数量")
         
         limit_layout.addStretch(1)
         limit_layout.addWidget(self.limit_posts)
@@ -553,8 +553,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         # Main content type selection row (centered)
         checkbox_row1 = QHBoxLayout()
         checkbox_row1.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.download_highlights = QCheckBox("+ Download Highlights")
-        self.download_stories = QCheckBox("+ Download Stories")
+        self.download_highlights = QCheckBox("+ 下载精选动态")
+        self.download_stories = QCheckBox("+ 下载快拍")
         
         checkbox_row1.addWidget(self.download_highlights)
         checkbox_row1.addWidget(self.download_stories)
@@ -563,12 +563,12 @@ class InstaloaderGUIWrapper(QMainWindow):
         # Specialized download mode options (centered)
         checkbox_row2 = QHBoxLayout()
         checkbox_row2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.only_highlights = QCheckBox("Only Download Highlights") 
-        self.only_highlights.setToolTip("Skip downloading posts and stories, only download highlights")
-        self.only_stories = QCheckBox("Only Download Stories")
-        self.only_stories.setToolTip("Skip downloading posts, only download stories")
-        self.profile_pic_only = QCheckBox("Only Download Profile Picture")
-        self.profile_pic_only.setToolTip("Download only the profile picture")
+        self.only_highlights = QCheckBox("仅下载精选动态") 
+        self.only_highlights.setToolTip("不下载普通帖子和快拍，仅下载精选动态")
+        self.only_stories = QCheckBox("仅下载快拍")
+        self.only_stories.setToolTip("不下载普通帖子，仅下载快拍")
+        self.profile_pic_only = QCheckBox("仅下载头像")
+        self.profile_pic_only.setToolTip("仅下载账号头像")
         
         checkbox_row2.addWidget(self.only_highlights)
         checkbox_row2.addWidget(self.only_stories)
@@ -586,8 +586,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         # Add control button group below options group
         self.control_group = QHBoxLayout()
         
-        self.start_button = QPushButton("▶ Start")
-        self.stop_button = QPushButton("⏹ Stop")
+        self.start_button = QPushButton("▶ 开始下载")
+        self.stop_button = QPushButton("⏹ 停止")
         
         # Set object names for styling
         self.start_button.setObjectName("start_button")
@@ -617,13 +617,13 @@ class InstaloaderGUIWrapper(QMainWindow):
         content_layout = QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
         
-        timing_group = QGroupBox("⏱️ Anti-Detection Timing System")
+        timing_group = QGroupBox("⏱️ 请求间隔与限速设置")
         timing_layout = QVBoxLayout()
         timing_group.setLayout(timing_layout)
         
         # Information text about timing system
         info_text = QLabel(
-            "Adjust to find right balance between download speed and account safety."
+            "调整请求间隔，在下载速度与账号安全之间取得平衡。"
         )
         info_text.setWordWrap(True)
         info_text.setStyleSheet("color: #808080; font-style: italic; margin-bottom: 10px;")
@@ -631,9 +631,9 @@ class InstaloaderGUIWrapper(QMainWindow):
         
         # Button row for settings management
         buttons_layout = QHBoxLayout()
-        self.reset_button = QPushButton("Reset to Default Values")
+        self.reset_button = QPushButton("恢复默认设置")
         self.reset_button.clicked.connect(self.reset_advanced_settings)
-        self.save_button = QPushButton("💾 Save Settings")
+        self.save_button = QPushButton("💾 保存设置")
         self.save_button.clicked.connect(self.save_settings)
         buttons_layout.addWidget(self.reset_button)
         buttons_layout.addWidget(self.save_button)
@@ -642,8 +642,8 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # Base delay setting
         base_delay_layout = QHBoxLayout()
-        base_delay_label = QLabel("Base Delay (seconds):")
-        base_delay_label.setToolTip("Time to wait between each posts downloads")
+        base_delay_label = QLabel("基础延迟（秒）：")
+        base_delay_label.setToolTip("下载每个帖子之间的等待时间")
         base_delay_layout.addWidget(base_delay_label)
         base_delay_layout.addStretch()
         self.base_delay = QDoubleSpinBox()
@@ -654,14 +654,14 @@ class InstaloaderGUIWrapper(QMainWindow):
         base_delay_layout.addWidget(self.base_delay)
         
         # Explanation text for base delay
-        base_delay_info = QLabel("The minimum waiting time between downloads to simulate human browsing")
+        base_delay_info = QLabel("每次下载间隔的最短等待时间，模拟正常浏览")
         base_delay_info.setStyleSheet("color: #808080; font-style: italic;")
         base_delay_info.setWordWrap(True)
         
         # Jitter setting
         jitter_layout = QHBoxLayout()
-        jitter_label = QLabel("Random Jitter (seconds):")
-        jitter_label.setToolTip("Random additional delay to appear as human behavior")
+        jitter_label = QLabel("随机浮动（秒）：")
+        jitter_label.setToolTip("增加随机延迟，模拟真人操作")
         jitter_layout.addWidget(jitter_label)
         jitter_layout.addStretch()
         self.jitter = QDoubleSpinBox()
@@ -672,14 +672,14 @@ class InstaloaderGUIWrapper(QMainWindow):
         jitter_layout.addWidget(self.jitter)
         
         # Explanation text for jitter
-        jitter_info = QLabel("Random extra time added to delays to make browsing pattern less predictable")
+        jitter_info = QLabel("额外随机等待，降低请求间隔的规律性")
         jitter_info.setStyleSheet("color: #808080; font-style: italic;")
         jitter_info.setWordWrap(True)
 
         # Story multiplier setting
         story_layout = QHBoxLayout()
-        story_label = QLabel("Story Delay Multiplier:")
-        story_label.setToolTip("Extra time caution for story downloads")
+        story_label = QLabel("快拍延迟倍数：")
+        story_label.setToolTip("对快拍下载增加额外等待")
         story_layout.addWidget(story_label)
         story_layout.addStretch()
         self.story_multiplier = QDoubleSpinBox()
@@ -690,14 +690,14 @@ class InstaloaderGUIWrapper(QMainWindow):
         story_layout.addWidget(self.story_multiplier)
 
         # Explanation text for story multiplier
-        story_info = QLabel("Multiplies the base delay when downloading stories for added safety")
+        story_info = QLabel("下载快拍时按此倍数增加基础等待时间")
         story_info.setStyleSheet("color: #808080; font-style: italic;")
         story_info.setWordWrap(True)
         
         # Critical wait setting
         critical_layout = QHBoxLayout()
-        critical_label = QLabel("Critical Wait (minutes):")
-        critical_label.setToolTip("Timeout duration after errors or temporary ban")
+        critical_label = QLabel("触发限速后等待（分钟）：")
+        critical_label.setToolTip("发生错误或临时限制后的等待时间")
         critical_layout.addWidget(critical_label)
         critical_layout.addStretch()
         self.critical_wait = QSpinBox()
@@ -706,14 +706,14 @@ class InstaloaderGUIWrapper(QMainWindow):
         critical_layout.addWidget(self.critical_wait)
 
         # Explanation text for critical wait
-        critical_info = QLabel("Pause duration after encountering errors or rate limits")
+        critical_info = QLabel("遭遇错误或请求限制后的暂停时长")
         critical_info.setStyleSheet("color: #808080; font-style: italic;")
         critical_info.setWordWrap(True)
         
         # Long session chance setting
         session_layout = QHBoxLayout()
-        session_label = QLabel("Long Session Chance (0-1):")
-        session_label.setToolTip("Probability of taking a longer break")
+        session_label = QLabel("长时间休息概率（0–1）：")
+        session_label.setToolTip("触发较长时间休息的概率")
         session_layout.addWidget(session_label)
         session_layout.addStretch()
         self.long_session_chance = QDoubleSpinBox()
@@ -724,14 +724,14 @@ class InstaloaderGUIWrapper(QMainWindow):
         session_layout.addWidget(self.long_session_chance)
 
         # Explanation text for long session chance
-        session_info = QLabel("Probability (0-1) that a longer break will be taken between downloads")
+        session_info = QLabel("下载间隔中随机插入较长休息的概率（0–1）")
         session_info.setStyleSheet("color: #808080; font-style: italic;")
         session_info.setWordWrap(True)
 
         # Long pause duration settings
         pause_duration_layout = QHBoxLayout()
-        pause_duration_label = QLabel("Long Pause Duration (min-max sec):")
-        pause_duration_label.setToolTip("Minimum and maximum seconds for the longer break")
+        pause_duration_label = QLabel("长休息时间范围（秒）：")
+        pause_duration_label.setToolTip("长时间休息的最小及最大秒数")
         pause_duration_layout.addWidget(pause_duration_label)
         pause_duration_layout.addStretch()
         
@@ -752,14 +752,14 @@ class InstaloaderGUIWrapper(QMainWindow):
         pause_duration_layout.addWidget(self.long_pause_max)
         
         # Explanation text for pause duration
-        pause_duration_info = QLabel("The random range of seconds for the longer safety break")
+        pause_duration_info = QLabel("长时间安全休息的随机秒数范围")
         pause_duration_info.setStyleSheet("color: #808080; font-style: italic;")
         pause_duration_info.setWordWrap(True)
         
         # Request timeout setting
         timeout_layout = QHBoxLayout()
-        timeout_label = QLabel("Request Timeout (seconds):")
-        timeout_label.setToolTip("Maximum time to wait for server response")
+        timeout_label = QLabel("请求超时（秒）：")
+        timeout_label.setToolTip("等待服务器响应的最长时间")
         timeout_layout.addWidget(timeout_label)
         timeout_layout.addStretch()
         self.request_timeout = QSpinBox()
@@ -769,7 +769,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         timeout_layout.addWidget(self.request_timeout)
 
         # Explanation text for request timeout
-        timeout_info = QLabel("Maximum time to wait for Instagram server to respond before timing out")
+        timeout_info = QLabel("等待 Instagram 服务器响应直至超时的时长")
         timeout_info.setStyleSheet("color: #808080; font-style: italic;")
         timeout_info.setWordWrap(True)
 
@@ -809,13 +809,13 @@ class InstaloaderGUIWrapper(QMainWindow):
         scroll_layout.setSpacing(20)
 
         # App title
-        title_label = QLabel(f"{APP_NAME} v{APP_VERSION}")
+        title_label = QLabel(f"Instaloader 图形下载器 v{APP_VERSION}")
         title_label.setStyleSheet("font-size: 24px; font-weight: bold;")
         title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         scroll_layout.addWidget(title_label)
 
         # Version info with hyperlink to Instaloader - changed color to white
-        version_label = QLabel(f'Using <a href="https://instaloader.github.io/" style="color: white">Instaloader</a> Library v{INSTALOADER_VERSION}')
+        version_label = QLabel(f'使用 <a href="https://instaloader.github.io/" style="color: white">Instaloader</a> 下载库 v{INSTALOADER_VERSION}')
         version_label.setOpenExternalLinks(False)
         version_label.linkActivated.connect(self.open_link)
         version_label.setStyleSheet("font-size: 14px; color: #808080;")
@@ -824,9 +824,8 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # Moved app description right after the version info
         desc_text = QLabel(
-            "A desktop application that provides a user-friendly "
-            "graphical user interface for downloading contents "
-            "from Instagram profiles using the Instaloader Python library."
+            "基于 Instaloader 的 Instagram 内容下载器，可在桌面上管理账号、"
+            "收藏帖子、快拍、精选动态和单条内容的下载。"
         )
         desc_text.setWordWrap(True)
         desc_text.setStyleSheet("font-size: 14px;")
@@ -834,7 +833,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         scroll_layout.addWidget(desc_text)
 
         # Developer info
-        dev_label = QLabel('Developed by <a href="https://github.com/marhensa/" style="color: white">@marhensa</a>')
+        dev_label = QLabel('原作者：<a href="https://github.com/marhensa/" style="color: white">@marhensa</a> · 中文与 macOS 适配：@Rok1n')
         dev_label.setOpenExternalLinks(False)
         dev_label.linkActivated.connect(self.open_link)
         dev_label.setStyleSheet("font-size: 16px; color: #4CAF50;")
@@ -843,7 +842,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         scroll_layout.addWidget(dev_label)
 
         # GitHub link
-        github_label = QLabel('<a href="https://github.com/marhensa/instaloader-gui-wrapper" style="color: #2196F3;">GitHub Repository</a>')
+        github_label = QLabel('<a href="https://github.com/Rok1n/instaloader-gui-wrapper" style="color: #2196F3;">GitHub 项目仓库</a>')
         github_label.setOpenExternalLinks(False)
         github_label.linkActivated.connect(self.open_link)
         github_label.setStyleSheet("font-size: 14px;")
@@ -851,7 +850,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         scroll_layout.addWidget(github_label)
         
         # Donation info
-        donation_label = QLabel('If you find this tool useful, please consider supporting development: <a href="https://ko-fi.com/marhensa" style="color: white">Ko-fi @marhensa</a>')
+        donation_label = QLabel('支持原作者：<a href="https://ko-fi.com/marhensa" style="color: white">Ko-fi @marhensa</a>')
         donation_label.setOpenExternalLinks(False)
         donation_label.linkActivated.connect(self.open_link)
         donation_label.setStyleSheet("font-size: 14px; color: #FFB74D;")
@@ -867,15 +866,10 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # Disclaimer text
         disclaimer_text = QLabel(
-            "DISCLAIMER: This tool is for personal use only. Respect Instagram's terms of "
-            "service and copyright rules. The developer are not responsible "
-            "for misuse of this application.\n\n"
-            "• Your Instagram credentials can be saved into Session files\n"
-            "• which are more secure than entering credentials each time,\n"
-            "• but make sure delete those files if using this app in public PC!\n\n"
-            "• WARNING! Excessive downloads may trigger Instagram's rate limiting / temporary ban.\n"
-            "• Use at your own risk. The developer are not responsible for any consequences.\n"
-            "• This tool is not affiliated with Instagram or Facebook.\n"
+            "免责声明：本工具仅供个人合法使用。请遵守 Instagram 的服务条款与版权要求。\\n\\n"
+            "• 会话文件含有敏感登录信息，请勿分享，并在公用设备上及时删除。\\n"
+            "• 频繁下载可能触发 Instagram 的请求限制或临时封禁。\\n"
+            "• 请自行承担使用风险。本项目与 Instagram 或 Meta 无关联。"
         )
         disclaimer_text.setWordWrap(True)
         disclaimer_text.setStyleSheet("font-size: 14px;")
@@ -924,9 +918,9 @@ class InstaloaderGUIWrapper(QMainWindow):
             bar.setMinimumWidth(200)
             bar.setFixedHeight(20)
         
-        layout.addWidget(QLabel("Overall Progress:"))
+        layout.addWidget(QLabel("总进度："))
         layout.addWidget(self.overall_progress)
-        layout.addWidget(QLabel("Current Item Progress:"))
+        layout.addWidget(QLabel("当前项目进度："))
         layout.addWidget(self.current_progress)
 
     def apply_styles(self):
@@ -986,7 +980,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         self.long_pause_min.setValue(DEFAULT_LONG_PAUSE_MIN)
         self.long_pause_max.setValue(DEFAULT_LONG_PAUSE_MAX)
         self.request_timeout.setValue(DEFAULT_REQUEST_TIMEOUT)
-        self.log_message("Advanced settings reset to default values", "INFO")
+        self.log_message("高级设置已恢复默认值", "INFO")
         self.save_settings()
 
     def toggle_credentials(self, state):
@@ -1040,7 +1034,7 @@ class InstaloaderGUIWrapper(QMainWindow):
             
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Select Session File",
+            "选择会话文件",
             default_dir,
             "All Files (*)")  # Cross-platform filter for all files
             
@@ -1085,7 +1079,7 @@ class InstaloaderGUIWrapper(QMainWindow):
             else:
                 username = basename
         
-        self.logged_in_label.setText(f"(logged in as @{username})")
+        self.logged_in_label.setText(f"（已登录：@{username}）")
         self.logged_in_label.setStyleSheet("color: #4aff4a;")  # Green for confirmed
 
     def _update_will_login_label(self, text):
@@ -1095,7 +1089,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         """
         if not self.use_session.isChecked():
             if text:
-                self.logged_in_label.setText(f"(will login as @{text})")
+                self.logged_in_label.setText(f"（准备登录：@{text}）")
                 self.logged_in_label.setStyleSheet("color: #ffcc00;")  # Yellow for pending
             else:
                 self.logged_in_label.setText("")
@@ -1106,7 +1100,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         
         Uses APP_ROOT as the starting directory to direct to the app location.
         """
-        dir_path = QFileDialog.getExistingDirectory(self, "Select Download Directory", APP_ROOT)
+        dir_path = QFileDialog.getExistingDirectory(self, "选择下载文件夹", EXEC_DIR)
         if dir_path:
             self.dir_path.setText(os.path.normpath(dir_path))
 
@@ -1114,10 +1108,10 @@ class InstaloaderGUIWrapper(QMainWindow):
         """Update the description label for folder structure option."""
         if index == 0:
             self.folder_structure_desc.setText("downloads/saved_posts/{owner}/{filename}")
-            self.saved_info.setText("📁 Saved posts will be downloaded to: downloads/saved_posts/{post_owner}/")
+            self.saved_info.setText("📁 已收藏帖子保存至：downloads/saved_posts/{post_owner}/")
         else:
             self.folder_structure_desc.setText("downloads/saved_posts/{owner}_{filename}")
-            self.saved_info.setText("📁 Saved posts will be downloaded to: downloads/saved_posts/")
+            self.saved_info.setText("📁 已收藏帖子保存至：downloads/saved_posts/")
 
     def toggle_date_range(self, state):
         """
@@ -1329,7 +1323,7 @@ class InstaloaderGUIWrapper(QMainWindow):
                 self.two_factor_signal.connect(self.downloader_thread.set_two_factor_code)
                 
                 # Update UI state
-                self.start_button.setText("⏸ Pause")
+                self.start_button.setText("⏸ 暂停")
                 self.stop_button.setEnabled(True)
                 self.is_downloading = True
                 self.downloader_thread.start()
@@ -1338,33 +1332,33 @@ class InstaloaderGUIWrapper(QMainWindow):
                 # Toggle pause/resume
                 if self.downloader_thread.is_paused:
                     if self.downloader_thread.resume():
-                        self.start_button.setText("⏸ Pause")
+                        self.start_button.setText("⏸ 暂停")
                     else:
-                        self.log_message("Failed to resume download", "ERROR")
+                        self.log_message("无法继续下载", "ERROR")
                 else:
                     if self.downloader_thread.pause():
-                        self.start_button.setText("▶ Resume")
+                        self.start_button.setText("▶ 继续")
                     else:
-                        self.log_message("Failed to pause download", "ERROR")
+                        self.log_message("无法暂停下载", "ERROR")
 
         except Exception as e:
             self.logger.error(f"Error in toggle_start_pause: {str(e)}")
-            self.log_message(f"Error controlling download: {str(e)}", "ERROR")
+            self.log_message(f"控制下载时发生错误：{str(e)}", "ERROR")
             self.reset_ui_state()
 
     def handle_state_change(self, state, details):
         """Handle download state changes with improved error handling"""
         try:
             if state == 'paused':
-                self.start_button.setText("▶ Resume")
+                self.start_button.setText("▶ 继续")
             elif state == 'resumed':
-                self.start_button.setText("⏸ Pause")
+                self.start_button.setText("⏸ 暂停")
             elif state in ['stopped', 'completed', 'error']:
                 self.reset_ui_state()
                 self.is_downloading = False
                 
             if state == 'error':
-                self.log_message(f"Download error: {details}", "ERROR")
+                self.log_message(f"下载错误：{details}", "ERROR")
                 
         except Exception as e:
             self.logger.error(f"Error handling state change: {str(e)}")
@@ -1398,12 +1392,12 @@ class InstaloaderGUIWrapper(QMainWindow):
             since_date = self.since_date.date()
             until_date = self.until_date.date()
             if since_date > until_date:
-                self.log_message("Invalid date range: 'From' date cannot be more recent than 'To' date!", "ERROR")
+                self.log_message("日期范围无效：开始日期不能晚于结束日期！", "ERROR")
                 return False
         
         if is_single_post:
             if not config['post_url']:
-                self.log_message("Post URL is required for single post download!", "ERROR")
+                self.log_message("下载单条内容必须填写帖子链接！", "ERROR")
                 return False
                 
             # Updated URL patterns to handle all variations including username in path
@@ -1446,20 +1440,20 @@ class InstaloaderGUIWrapper(QMainWindow):
             # Only check for target profile when in Target Profile mode (not single post or saved posts)
             is_saved_posts = config.get('download_saved_posts', False)
             if not is_saved_posts and not config['target_profile']:
-                self.log_message("Target profile name is required!", "ERROR")
+                self.log_message("请填写目标账号的用户名！", "ERROR")
                 return False
 
         # Common validations
         if not config['download_dir']:
-            self.log_message("Please select a download directory!", "ERROR")
+            self.log_message("请选择下载文件夹！", "ERROR")
             return False
             
         if not config['use_session'] and (not config['username'] or not config['password']):
-            self.log_message("Please enter your username and password or use a session file!", "ERROR")
+            self.log_message("请输入用户名和密码，或改用会话文件！", "ERROR")
             return False
             
         if config['use_session'] and not config['session_path']:
-            self.log_message("Please select a session file!", "ERROR")
+            self.log_message("请选择会话文件！", "ERROR")
             return False
             
         return True
@@ -1486,7 +1480,7 @@ class InstaloaderGUIWrapper(QMainWindow):
             message (str): The message to log
             level (str): The log level ('INFO', 'WARNING', 'ERROR')
         """
-        self.log_viewer.append_log(message, level)
+        self.log_viewer.append_log(translate_log(message), level)
         
         # Log to file using the proper logger
         log_method = getattr(self.logger, level.lower(), None)
@@ -1497,7 +1491,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         if "Login successful" in message and not self.use_session.isChecked():
             username = self.username.text().strip()
             if username:
-                self.logged_in_label.setText(f"(logged in as @{username})")
+                self.logged_in_label.setText(f"（已登录：@{username}）")
                 self.logged_in_label.setStyleSheet("color: #4aff4a;")  # Green
 
     def update_preview(self, file_path):
@@ -1600,7 +1594,7 @@ class InstaloaderGUIWrapper(QMainWindow):
                 return
         
         # Fallback to placeholder if no thumbnail
-        self.preview_label.setText("📹 Video File\nPreview not available")
+        self.preview_label.setText("📹 视频文件\n暂不支持预览")
         self.preview_label.setStyleSheet("""
             QLabel {
                 background-color: #2B2B2B;
@@ -1624,13 +1618,13 @@ class InstaloaderGUIWrapper(QMainWindow):
         import re
         
         # Determine content type based on path
-        content_type = "Unknown"
+        content_type = "未知"
         if "/stories/" in file_path.replace("\\", "/"):
-            content_type = "Story"
+            content_type = "快拍"
         elif "/posts/" in file_path.replace("\\", "/"):
-            content_type = "Post"
+            content_type = "帖子"
         elif "/profile_pic/" in file_path.replace("\\", "/"):
-            content_type = "Profile Picture"
+            content_type = "头像"
         elif "/highlights/" in file_path.replace("\\", "/"):
             content_type = "Highlight"
             
@@ -1693,7 +1687,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         
         if index == 0:  # Target Profile
             self.options_group.setVisible(True)
-            self.options_group.setTitle("🔽 Download Options (for Target Profile)")
+            self.options_group.setTitle("🔽 下载选项（目标账号）")
             # Enable and show profile-specific options
             for cb in [self.download_highlights, self.download_stories,
                        self.only_highlights, self.only_stories, self.profile_pic_only]:
@@ -1701,7 +1695,7 @@ class InstaloaderGUIWrapper(QMainWindow):
                 cb.setEnabled(True)
         elif index == 1:  # Saved Posts
             self.options_group.setVisible(True)
-            self.options_group.setTitle("🔽 Download Options (for Saved Posts)")
+            self.options_group.setTitle("🔽 下载选项（已收藏帖子）")
             # Hide, uncheck, and disable profile-specific options
             for cb in [self.download_highlights, self.download_stories,
                        self.only_highlights, self.only_stories, self.profile_pic_only]:
@@ -1733,7 +1727,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         Returns:
             dict: The current configuration dictionary
         """
-        mode = self.download_mode.currentText()
+        mode = ("Target Profile", "Saved Posts", "Single Post")[self.download_mode.currentIndex()]
         
         config = {
             'use_session': self.use_session.isChecked(),
@@ -1844,8 +1838,8 @@ class InstaloaderGUIWrapper(QMainWindow):
                 return
                 
         if self.downloader_thread and self.downloader_thread.isRunning():
-            self.logger.info("Stopping download thread before shutdown...")
-            self.log_message("Stopping download thread before shutdown...", "INFO")
+            self.logger.info("正在停止下载任务，然后退出…")
+            self.log_message("正在停止下载任务，然后退出…", "INFO")
             
             # Set the flag to indicate we're stopping
             if hasattr(self.downloader_thread, 'is_running'):
@@ -1896,7 +1890,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         
         # Create dialog and all UI components
         dialog = QDialog(self)
-        dialog.setWindowTitle("Two-Factor Authentication Required")
+        dialog.setWindowTitle("需要双重身份验证")
         dialog.setMinimumWidth(400)
         # No longer need to set custom stylesheet as qdarktheme applies globally
         # dialog.setStyleSheet(get_dark_style())
@@ -1905,17 +1899,15 @@ class InstaloaderGUIWrapper(QMainWindow):
         layout = QVBoxLayout(dialog)
         
         info_label = QLabel(
-            "Instagram requires a verification code to complete login.\n\n"
-            "Please enter the 6-digit code from your:\n"
-            "• Authentication app (like Google Authenticator)\n"
-            "• SMS messages on your registered phone"
+            "Instagram 要求输入验证码以完成登录。\\n\\n"
+            "请输入验证器应用（如 Google Authenticator）或手机短信收到的六位验证码。"
         )
         info_label.setWordWrap(True)
         layout.addWidget(info_label)
         
         # Store reference to the input field
         self.two_factor_input = QLineEdit()
-        self.two_factor_input.setPlaceholderText("Enter 6-digit verification code")
+        self.two_factor_input.setPlaceholderText("输入六位验证码")
         self.two_factor_input.setMaxLength(6)
         self.two_factor_input.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.two_factor_input.setMinimumHeight(36)
@@ -1927,10 +1919,10 @@ class InstaloaderGUIWrapper(QMainWindow):
         layout.addWidget(self.two_factor_input)
         
         button_layout = QHBoxLayout()
-        submit_button = QPushButton("Submit Code")
+        submit_button = QPushButton("提交验证码")
         submit_button.setDefault(True)
         submit_button.setMinimumHeight(36)
-        cancel_button = QPushButton("Cancel")
+        cancel_button = QPushButton("取消")
         cancel_button.setMinimumHeight(36)
         button_layout.addWidget(submit_button)
         button_layout.addWidget(cancel_button)
@@ -1966,7 +1958,7 @@ class InstaloaderGUIWrapper(QMainWindow):
                 self.two_factor_signal.emit(code)
                 self.two_factor_dialog.accept()
             else:
-                self.logger.warning("No 2FA code entered")
+                self.logger.warning("未输入双重验证码")
         
     def cancel_two_factor(self):
         """
@@ -2032,12 +2024,12 @@ class InstaloaderGUIWrapper(QMainWindow):
         """
         username = self.target_profile.text().strip()
         if not username:
-            self.profile_name_display.setText("Please enter a username")
+            self.profile_name_display.setText("请输入用户名")
             self.profile_name_display.setStyleSheet("color: #FF5252;")  # Red text
             return
             
         # Show checking indicator
-        self.profile_name_display.setText("Checking...")
+        self.profile_name_display.setText("正在检查…")
         self.profile_name_display.setStyleSheet("color: #E0E0E0;")  # Default text color
         self.check_name_button.setEnabled(False)
         QApplication.processEvents()  # Make sure UI updates
@@ -2076,9 +2068,9 @@ class InstaloaderGUIWrapper(QMainWindow):
             self.profile_name_display.setText(f"✓ {result}")
             self.profile_name_display.setStyleSheet("color: #4CAF50;")  # Green text
         else:
-            self.profile_name_display.setText(f"✗ {result}")
+            self.profile_name_display.setText(f"✗ {translate_log(result)}")
             self.profile_name_display.setStyleSheet("color: #FF5252;")  # Red text
-            self.log_message(f"Profile check failed: {result}", "ERROR")
+            self.log_message(f"账号检查失败：{result}", "ERROR")
 
     def set_session_file(self, session_path):
         """
@@ -2121,12 +2113,12 @@ class InstaloaderGUIWrapper(QMainWindow):
     def reset_ui_state(self):
         """Reset UI elements to their initial state"""
         self.start_button.setEnabled(True)
-        self.start_button.setText("▶ Start")
+        self.start_button.setText("▶ 开始下载")
         self.stop_button.setEnabled(False)
 
     def download_stopped(self):
         """Handle download being manually stopped by user"""
         self.is_downloading = False
         self.reset_ui_state()
-        self.log_message("Download stopped by user", "WARNING")
+        self.log_message("用户已停止下载", "WARNING")
         # Don't reset progress bars completely to show how far we got
