@@ -33,7 +33,7 @@ python -m PyInstaller --clean --noconfirm --windowed --onedir \
   run.py
 
 APP="dist/Instaloader GUI Wrapper.app"
-lipo -verify_arch x86_64 "$APP/Contents/MacOS/Instaloader GUI Wrapper"
+lipo "$APP/Contents/MacOS/Instaloader GUI Wrapper" -verify_arch x86_64
 codesign --force --deep --sign - "$APP"
 codesign --verify --deep --strict "$APP"
 mkdir -p dmg-root
