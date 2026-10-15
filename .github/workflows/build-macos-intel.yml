@@ -68,7 +68,7 @@ jobs:
           BIN="$APP/Contents/MacOS/Instaloader GUI Wrapper"
           test -f "$BIN"
           file "$BIN"
-          lipo -verify_arch x86_64 "$BIN"
+          lipo "$BIN" -verify_arch x86_64
           # Re-sign locally only; Apple Developer ID signing/notarization needs
           # a separate credentialed release pipeline.
           codesign --force --deep --sign - "$APP"
