@@ -283,8 +283,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         help_label = QLabel("❓")
         help_label.setStyleSheet("color: #E0E0E0;")
         session_locations = (
-            "会话文件包含登录信息，应妥善保管。公共电脑使用后请删除。\\n"
-            "Windows：%localappdata%\\\\Instaloader\\\\session-yourusername\\n"
+            "会话文件包含登录信息，应妥善保管。公共电脑使用后请删除。\n"
+            "Windows：%localappdata%\\\Instaloader\\\session-yourusername\n"
             "macOS / Linux：~/.config/instaloader/session-yourusername"
         )
         help_label.setToolTip(session_locations)
@@ -866,9 +866,9 @@ class InstaloaderGUIWrapper(QMainWindow):
 
         # Disclaimer text
         disclaimer_text = QLabel(
-            "免责声明：本工具仅供个人合法使用。请遵守 Instagram 的服务条款与版权要求。\\n\\n"
-            "• 会话文件含有敏感登录信息，请勿分享，并在公用设备上及时删除。\\n"
-            "• 频繁下载可能触发 Instagram 的请求限制或临时封禁。\\n"
+            "免责声明：本工具仅供个人合法使用。请遵守 Instagram 的服务条款与版权要求。\n\n"
+            "• 会话文件含有敏感登录信息，请勿分享，并在公用设备上及时删除。\n"
+            "• 频繁下载可能触发 Instagram 的请求限制或临时封禁。\n"
             "• 请自行承担使用风险。本项目与 Instagram 或 Meta 无关联。"
         )
         disclaimer_text.setWordWrap(True)
@@ -1428,11 +1428,11 @@ class InstaloaderGUIWrapper(QMainWindow):
                     
             if not valid_url:
                 self.log_message(
-                    "Invalid Instagram URL format. URL must be in one of these formats:\n"
-                    "• Posts: instagram.com/[username]/p/postid\n"
-                    "• Reels: instagram.com/[username]/reel/reelid\n"
-                    "• Stories: instagram.com/stories/username/storyid\n"
-                    "• Highlights: instagram.com/[username]/stories/highlights/highlightid", 
+                    "Instagram 链接格式无效，支持以下格式：\n"
+                    "• 帖子：instagram.com/[username]/p/postid\n"
+                    "• Reels：instagram.com/[username]/reel/reelid\n"
+                    "• 快拍：instagram.com/stories/username/storyid\n"
+                    "• 精选：instagram.com/[username]/stories/highlights/highlightid", 
                     "ERROR"
                 )
                 return False
@@ -1626,11 +1626,11 @@ class InstaloaderGUIWrapper(QMainWindow):
         elif "/profile_pic/" in file_path.replace("\\", "/"):
             content_type = "头像"
         elif "/highlights/" in file_path.replace("\\", "/"):
-            content_type = "Highlight"
+            content_type = "精选动态"
             
         # Get highlight name if applicable
         highlight_name = ""
-        if content_type == "Highlight":
+        if content_type == "精选动态":
             path_parts = file_path.replace("\\", "/").split("/")
             try:
                 highlight_index = path_parts.index("highlights")
@@ -1639,7 +1639,7 @@ class InstaloaderGUIWrapper(QMainWindow):
             except ValueError:
                 pass
             
-        info_text = f"Content Type: {content_type}{highlight_name}\n\n"
+        info_text = f"内容类型：{content_type}{highlight_name}\n\n"
         
         # Read caption from companion .txt file
         txt_path = os.path.splitext(file_path)[0] + ".txt"
@@ -1648,7 +1648,7 @@ class InstaloaderGUIWrapper(QMainWindow):
                 with open(txt_path, 'r', encoding='utf-8') as f:
                     caption = f.read().strip()
                     if caption:
-                        info_text += f"Caption:\n{caption}\n\n"
+                        info_text += f"配文：\n{caption}\n\n"
             except Exception as e:
                 self.logger.warning(f"Error reading caption from txt: {str(e)}")
         
@@ -1660,14 +1660,14 @@ class InstaloaderGUIWrapper(QMainWindow):
             date_str = match.group(1)
             try:
                 post_date = datetime.strptime(date_str, '%Y-%m-%d_%H-%M-%S')
-                info_text += f"Post Date: {post_date.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+                info_text += f"发布日期：{post_date.strftime('%Y-%m-%d %H:%M:%S')}\n\n"
             except ValueError:
                 pass
         
         # Add file creation time (download time)
         try:
             creation_time = datetime.fromtimestamp(os.path.getctime(file_path))
-            info_text += f"Downloaded: {creation_time.strftime('%Y-%m-%d %H:%M:%S')}"
+            info_text += f"下载时间：{creation_time.strftime('%Y-%m-%d %H:%M:%S')}"
         except Exception as e:
             self.logger.warning(f"Error getting file information: {str(e)}")
         
@@ -1827,8 +1827,8 @@ class InstaloaderGUIWrapper(QMainWindow):
             
         if self.is_downloading:
             reply = QMessageBox.question(
-                self, 'Confirm Exit',
-                'A download is in progress. Are you sure you want to quit?',
+                self, '确认退出',
+                '下载尚未完成，确定要退出程序吗？',
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.No
             )
@@ -1899,7 +1899,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         layout = QVBoxLayout(dialog)
         
         info_label = QLabel(
-            "Instagram 要求输入验证码以完成登录。\\n\\n"
+            "Instagram 要求输入验证码以完成登录。\n\n"
             "请输入验证器应用（如 Google Authenticator）或手机短信收到的六位验证码。"
         )
         info_label.setWordWrap(True)
@@ -2083,7 +2083,7 @@ class InstaloaderGUIWrapper(QMainWindow):
         if os.path.exists(session_path):
             self.session_path.setText(os.path.normpath(session_path))
             self.use_session.setChecked(True)
-            self.log_message("Session file has been set for next download. "
+            self.log_message("已设置会话文件供下次下载使用。"
                             "You won't need to enter login credentials again.", "INFO")
 
     def toggle_post_limit(self, state):
@@ -2100,8 +2100,8 @@ class InstaloaderGUIWrapper(QMainWindow):
             return
             
         reply = QMessageBox.question(
-            self, 'Confirm Stop',
-            'Are you sure you want to stop the download?',
+            self, '确认停止',
+            '确定要停止当前下载吗？',
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
