@@ -283,8 +283,8 @@ class InstaloaderGUIWrapper(QMainWindow):
         help_label = QLabel("❓")
         help_label.setStyleSheet("color: #E0E0E0;")
         session_locations = (
-            "会话文件包含登录信息，应妥善保管，公共电脑使用后请删除。\\n"
-            "Windows：%localappdata%/Instaloader/session-yourusername\\n"
+            "会话文件包含登录信息，应妥善保管，公共电脑使用后请删除。\n"
+            "Windows：%localappdata%/Instaloader/session-yourusername\n"
             "macOS / Linux：~/.config/instaloader/session-yourusername"
         )
         help_label.setToolTip(session_locations)
