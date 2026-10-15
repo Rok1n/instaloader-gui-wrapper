@@ -3,6 +3,119 @@
 Core errors are preserved in their original language in the diagnostic log;
 this translator only changes text rendered in the GUI.
 """
+import re
+
+REGEX_TRANSLATIONS = [
+    [
+        "Found (\\d+) posts so far\\.\\.\\.",
+        "目前已发现 {0} 条帖子…"
+    ],
+    [
+        "Found (\\d+) story items to download",
+        "发现 {0} 条待下载快拍"
+    ],
+    [
+        "Found (\\d+) highlights to download",
+        "发现 {0} 组待下载精选动态"
+    ],
+    [
+        "Found (\\d+) total story items",
+        "共发现 {0} 条快拍"
+    ],
+    [
+        "Found (\\d+) items in this highlight within date range",
+        "当前精选动态在指定日期范围内共有 {0} 条内容"
+    ],
+    [
+        "Processing highlight (\\d+)/(\\d+): (.*)",
+        "正在处理精选动态 {0}/{1}：{2}"
+    ],
+    [
+        "Processing story item (\\d+)/(\\d+) from (.*)",
+        "正在处理快拍 {0}/{1}，日期：{2}"
+    ],
+    [
+        "Processing posts\\.\\.\\. \\((\\d+) match criteria so far\\)",
+        "正在检查帖子…目前有 {0} 条符合条件"
+    ],
+    [
+        "Filtered (\\d+) items outside date range",
+        "已筛除 {0} 条不在日期范围内的内容"
+    ],
+    [
+        "Downloaded (\\d+) highlight items",
+        "已下载 {0} 条精选动态"
+    ],
+    [
+        "Downloaded (\\d+) of (\\d+) story items",
+        "快拍已下载 {0}/{1} 条"
+    ],
+    [
+        "Processing saved post (\\d+) from @(.*?) \\((.*?)\\)",
+        "正在处理第 {0} 条收藏内容，来自 @{1}（{2}）"
+    ],
+    [
+        "Skipping existing saved post from @(.*?) \\((.*?)\\)",
+        "跳过已存在的收藏内容：@{0}（{1}）"
+    ],
+    [
+        "Post limit is set to (\\d+) - only the most recent posts will be downloaded",
+        "已设置数量上限 {0}，仅下载最新帖子"
+    ],
+    [
+        "Date filtering is active - only content from (.*?) to (.*?) will be downloaded",
+        "已启用日期筛选：仅下载 {0} 到 {1} 的内容"
+    ],
+    [
+        "Downloading (\\d+) items from highlight '(.*?)'",
+        "正在从精选动态“{1}”下载 {0} 条内容"
+    ],
+    [
+        "Processing post (\\d+) from (.*)",
+        "正在处理第 {0} 条帖子，日期：{1}"
+    ],
+    [
+        "Connection error: (.*?)\\. Retrying in (.*?)s \\(Attempt (\\d+)/(\\d+)\\)",
+        "连接错误：{0}。将在 {1} 秒后重试（第 {2}/{3} 次）"
+    ],
+    [
+        "Posts download completed: (\\d+) downloaded, (\\d+) skipped, (\\d+) total found",
+        "帖子下载完成：下载 {0} 条，跳过 {1} 条，共发现 {2} 条"
+    ],
+    [
+        "Found story with ID (.*), downloading\\.\\.\\.",
+        "已找到快拍 ID {0}，正在下载…"
+    ],
+    [
+        "Fetching story from user (.*?) with ID: (.*)",
+        "正在获取账号 {0} 的快拍，ID：{1}"
+    ],
+    [
+        "Processing single item URL: (.*)",
+        "正在处理单条内容链接：{0}"
+    ],
+    [
+        "Will download: (.*?)\\. Total estimated items: (.*)",
+        "准备下载：{0}。预计共 {1} 条"
+    ],
+    [
+        "Successfully downloaded saved post from (.*)",
+        "收藏帖子下载成功，日期：{0}"
+    ],
+    [
+        "Downloaded highlight: (\\d+) items",
+        "精选动态下载完成：{0} 条"
+    ],
+    [
+        "Could not find highlight with ID: (.*)",
+        "找不到指定精选动态，ID：{0}"
+    ],
+    [
+        "Profile (.*) does not exist or is private",
+        "账号 {0} 不存在，或该账号为私密状态"
+    ]
+]
+
 EXACT = dict([
     [
         "Session loaded successfully!",
@@ -486,6 +599,11 @@ def translate_log(message):
         return str(message)
     if message in EXACT:
         return EXACT[message]
+    for pattern, translation in REGEX_TRANSLATIONS:
+        match = re.fullmatch(pattern, message)
+        if match:
+            return translation.format(*match.groups())
+
     for english, chinese in sorted(PREFIXES, key=lambda item: len(item[0]), reverse=True):
         if message.startswith(english):
             return chinese + message[len(english):]
